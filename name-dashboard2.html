@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Name Picker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Bungee&family=Fredoka:wght@600&family=Monoton&family=Orbitron:wght@700&family=Righteous&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    :root { color-scheme: dark; --accent: #b9ff73; }
+    body { margin: 0; min-height: 100vh; background: #101019; color: #f5f5fa; font-family: system-ui, sans-serif; }
+    body::before { content: ''; position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 30%, #30264477, transparent 65%); }
+    main { position: relative; max-width: 1100px; margin: auto; padding: 36px 24px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 32px; }
+    .brand { font-weight: 800; letter-spacing: -.04em; font-size: 24px; }
+    .badge, .label { font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+    .badge { color: var(--accent); padding: 8px 12px; border: 1px solid #ffffff26; border-radius: 100px; }
+    .hero { overflow: hidden; position: relative; border: 1px solid #ffffff1c; border-radius: 28px; padding: 48px 24px; text-align: center; background: #191923; }
+    .hero::before { content: ''; position: absolute; inset: 0; opacity: .18; pointer-events: none; background-image: radial-gradient(#b6b6ca 1px, transparent 1px); background-size: 24px 24px; }
+    .hero > * { position: relative; }
+    .label { color: #b0b0c2; }
+    h1 { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 .3em; align-items: center; min-height: 190px; margin: 32px 0; font-size: clamp(48px, 9vw, 108px); line-height: 1.3; font-weight: 600; }
+    .word { display: inline-block; white-space: nowrap; }
+    .letter { display: inline-block; text-shadow: 0 0 38px #ffffff12; }
+    .subtitle { color: #b0b0c2; font-size: 14px; }
+    button { border: 0; border-radius: 14px; padding: 16px 28px; background: var(--accent); color: #15151c; font: 750 15px system-ui, sans-serif; cursor: pointer; margin-top: 16px; }
+    button:hover { filter: brightness(1.1); }
+    button:focus-visible { outline: 3px solid white; outline-offset: 5px; }
+    button:disabled { opacity: .45; cursor: default; }
+    .lineup-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 16px; }
+    .lineup-form input { flex: 1 1 200px; min-width: 0; border: 1px solid #ffffff30; border-radius: 12px; background: #191923; color: #f5f5fa; padding: 14px; font: 15px system-ui, sans-serif; }
+    .lineup-form input:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    .lineup-form button { margin: 0; padding: 14px 18px; }
+    .lineup-form .reset { background: transparent; color: #b0b0c2; border: 1px solid #ffffff30; }
+    .hint { color: #b0b0c2; font-size: 13px; }
+    #lineup-status { min-height: 1.5em; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 18px 0 30px; }
+    .stat { border: 1px solid #ffffff18; background: #191923; border-radius: 18px; padding: 20px; }
+    .value { margin-top: 10px; font-size: 20px; font-weight: 650; }
+    .pool { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 14px; }
+    .chip { margin: 0; background: transparent; color: #aaaabd; border: 1px solid #ffffff20; border-radius: 100px; padding: 9px 14px; font-size: 13px; transition: color .2s, background .2s; }
+    .chip:hover { border-color: var(--accent); }
+    .chip::after { content: ' ×'; margin-left: 5px; opacity: .7; }
+    .chip.selected { color: #14141b; background: var(--accent); border-color: var(--accent); }
+    footer { color: #8c8c9f; font-size: 12px; margin-top: 26px; }
+    @media (max-width: 600px) { main { padding: 24px 16px; } .stats { gap: 8px; } .stat { padding: 16px 10px; } .value { font-size: 15px; } .hero { padding: 34px 12px; } .badge { font-size: 9px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header><div class="brand">The Name Picker<span style="color:var(--accent)">.</span></div><span class="badge">A little chance. A lot of color.</span></header>
+    <section class="hero" aria-labelledby="name">
+      <div class="label">And the pick is…</div>
+      <h1 id="name" aria-live="polite" aria-atomic="true"></h1>
+      <p class="subtitle">One random name. A fresh look every time.</p>
+      <button id="pick" type="button">Pick again ↗</button>
+    </section>
+    <section class="stats" aria-label="Selection details">
+      <div class="stat"><div class="label">In the mix</div><div id="count" class="value">8 names</div></div>
+      <div class="stat"><div class="label">Typeface</div><div id="font" class="value"></div></div>
+      <div class="stat"><div class="label">Color style</div><div id="mode" class="value"></div></div>
+    </section>
+    <div class="label">The lineup</div>
+    <p id="lineup-hint" class="hint">Click a name to remove it for now. Refresh or reset to restore the original lineup.</p>
+    <div class="pool" id="pool" aria-label="Available names"></div>
+    <form id="add-form" class="lineup-form">
+      <input id="new-name" type="text" aria-label="Temporary name" placeholder="Add a temporary name…" maxlength="40" required autocomplete="off" aria-describedby="lineup-hint lineup-status">
+      <button type="submit">Add name +</button>
+      <button id="reset" class="reset" type="button">Reset lineup</button>
+    </form>
+    <p id="lineup-status" class="hint" role="status" aria-live="polite"></p>
+    <footer>Each name has an equal chance on every pick. Repeats can happen.</footer>
+  </main>
+
+  <!-- Anime.js v4 UMD: no build tools or local server required. -->
+  <script src="https://cdn.jsdelivr.net/npm/animejs@4/dist/bundles/anime.umd.min.js"></script>
+  <script>
+    const names = ["Bernardo", "Adam", "Greg", "Verena", "Scott", "William", "Dan", "Manager's Choice"];
+    // Changes live only in memory; a page refresh restores the original names.
+    let activeNames = [...names];
+    let selectedName = null;
+    const fonts = ['Bungee', 'Righteous', 'Abril Fatface', 'Orbitron', 'Fredoka', 'Monoton'];
+    const heading = document.querySelector('#name');
+    const pool = document.querySelector('#pool');
+    const input = document.querySelector('#new-name');
+    const status = document.querySelector('#lineup-status');
+    const pickButton = document.querySelector('#pick');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let currentAnimation;
+    const randomItem = items => items[Math.floor(Math.random() * items.length)];
+    const randomHue = () => Math.floor(Math.random() * 360);
+    const color = hue => `hsl(${hue % 360}, 90%, 74%)`;
+
+    function renderLineup() {
+      pool.replaceChildren();
+      activeNames.forEach(name => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'chip';
+        chip.textContent = name;
+        chip.setAttribute('aria-label', `Remove ${name} from the lineup`);
+        chip.classList.toggle('selected', name === selectedName);
+        chip.addEventListener('click', () => {
+          activeNames = activeNames.filter(item => item !== name);
+          status.textContent = `${name} removed for now.`;
+          renderLineup();
+          if (selectedName === name || !activeNames.length) pickName();
+          (activeNames.length ? pickButton : input).focus();
+        });
+        pool.append(chip);
+      });
+      document.querySelector('#count').textContent = `${activeNames.length} ${activeNames.length === 1 ? 'name' : 'names'}`;
+      pickButton.disabled = activeNames.length === 0;
+    }
+
+    function pickName() {
+      if (currentAnimation) currentAnimation.cancel();
+      currentAnimation = null;
+      if (!activeNames.length) {
+        selectedName = null;
+        heading.textContent = 'Add a name';
+        heading.style.fontFamily = 'system-ui, sans-serif';
+        document.querySelector('#font').textContent = '—';
+        document.querySelector('#mode').textContent = '—';
+        return;
+      }
+      const name = randomItem(activeNames);
+      selectedName = name;
+      const font = randomItem(fonts);
+      const multicolor = Math.random() < 0.5;
+      const hue = randomHue();
+      document.documentElement.style.setProperty('--accent', color(hue));
+      heading.style.fontFamily = `"${font}", system-ui, sans-serif`;
+      heading.replaceChildren();
+
+      // Keep words together; allow Manager's Choice to wrap on small screens.
+      let letterIndex = 0;
+      name.split(' ').forEach((word, wordIndex) => {
+        if (wordIndex) heading.append(document.createTextNode(' '));
+        const wordSpan = document.createElement('span');
+        wordSpan.className = 'word';
+        wordSpan.style.maxWidth = '100%';
+        wordSpan.style.whiteSpace = 'normal';
+        wordSpan.style.overflowWrap = 'anywhere';
+        for (const character of word) {
+          const letter = document.createElement('span');
+          letter.className = 'letter';
+          letter.textContent = character;
+          letter.style.color = color(multicolor ? hue + letterIndex * 37 + Math.random() * 30 : hue);
+          wordSpan.append(letter);
+          letterIndex++;
+        }
+        heading.append(wordSpan);
+      });
+
+      document.querySelector('#font').textContent = font;
+      document.querySelector('#mode').textContent = multicolor ? 'Multicolor' : 'Single color';
+      [...pool.children].forEach(chip => chip.classList.toggle('selected', chip.textContent === name));
+
+      // The dashboard still picks and displays names if the CDN is unavailable.
+      if (window.anime && !reducedMotion.matches) {
+        const { animate, stagger } = window.anime;
+        currentAnimation = animate(heading.querySelectorAll('.letter'), {
+          y: [55, 0],
+          opacity: [0, 1],
+          rotate: [-8, 0],
+          scale: [0.8, 1],
+          duration: 850,
+          delay: stagger(55),
+          ease: 'outExpo'
+        });
+      }
+    }
+
+    document.querySelector('#add-form').addEventListener('submit', event => {
+      event.preventDefault();
+      const name = input.value.trim().replace(/\s+/g, ' ');
+      if (!name) {
+        status.textContent = 'Enter a name to add.';
+        input.focus();
+        return;
+      }
+      if (activeNames.some(item => item.toLowerCase() === name.toLowerCase())) {
+        status.textContent = `${name} is already in the lineup.`;
+        input.focus();
+        return;
+      }
+      activeNames.push(name);
+      input.value = '';
+      status.textContent = `${name} added for now.`;
+      renderLineup();
+      if (!selectedName) pickName();
+      input.focus();
+    });
+    document.querySelector('#reset').addEventListener('click', () => {
+      activeNames = [...names];
+      renderLineup();
+      if (!activeNames.includes(selectedName)) pickName();
+      status.textContent = 'Original lineup restored.';
+    });
+    pickButton.addEventListener('click', pickName);
+    renderLineup();
+    pickName(); // Choose immediately every time the dashboard opens.
+  </script>
+</body>
+</html>
