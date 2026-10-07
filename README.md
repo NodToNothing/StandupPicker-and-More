@@ -1,0 +1,1 @@
+A catchall location for some small scripts and other things I've used in the past.  The name dashboards are anime.js versions written in ChatGPT that really upscale the old Python standup picker code (and no package install, all js, interactive)
